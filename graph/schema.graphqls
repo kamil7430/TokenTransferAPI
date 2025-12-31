@@ -19,5 +19,5 @@ type Mutation {
 
 type Query {
   "Fetches the wallet with the specified address"
-  wallet(address: Address!): [Wallet!]!
+  wallet(address: Address!): Wallet!
 }
