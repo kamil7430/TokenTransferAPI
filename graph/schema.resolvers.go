@@ -18,7 +18,7 @@ func (r *mutationResolver) Transfer(ctx context.Context, fromAddress string, toA
 }
 
 // Wallet is the resolver for the wallet field.
-func (r *queryResolver) Wallet(ctx context.Context, address string) ([]*model.Wallet, error) {
+func (r *queryResolver) Wallet(ctx context.Context, address string) (*model.Wallet, error) {
 	panic(fmt.Errorf("not implemented: Wallet - wallet"))
 }
 
