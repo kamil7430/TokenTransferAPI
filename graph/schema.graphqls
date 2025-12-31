@@ -1,28 +1,23 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
+"40-digit hexadecimal wallet address, represented as string: 0x..."
+scalar Address
 
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
-}
+"256-bit integer represented as string"
+scalar BigInt
 
-type User {
-  id: ID!
-  name: String!
-}
-
-type Query {
-  todos: [Todo!]!
-}
-
-input NewTodo {
-  text: String!
-  userId: String!
+type Wallet {
+  address: Address!
+  tokens: BigInt!
 }
 
 type Mutation {
-  createTodo(input: NewTodo!): Todo!
+  """
+  Concurrent-safe mutation that transfers `amount` tokens from wallet
+  with `from_address` address to wallet with `to_address` address.
+  """
+  transfer(from_address: Address!, to_address: Address!, amount: BigInt!): BigInt!
+}
+
+type Query {
+  "Fetches the wallet with the specified address"
+  wallet(address: Address!): [Wallet!]!
 }

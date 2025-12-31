@@ -12,14 +12,14 @@ import (
 	"github.com/kamil7430/TokenTransferAPI/graph/model"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// Transfer is the resolver for the transfer field.
+func (r *mutationResolver) Transfer(ctx context.Context, fromAddress string, toAddress string, amount string) (string, error) {
+	panic(fmt.Errorf("not implemented: Transfer - transfer"))
 }
 
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+// Wallet is the resolver for the wallet field.
+func (r *queryResolver) Wallet(ctx context.Context, address string) ([]*model.Wallet, error) {
+	panic(fmt.Errorf("not implemented: Wallet - wallet"))
 }
 
 // Mutation returns MutationResolver implementation.
