@@ -8,6 +8,13 @@ services:
     build:
       context: .
       target: final
+    secrets:
+      - db-password
+    environment:
+        - POSTGRES_DB_PORT=5432
+        - POSTGRES_DB=tokens
+        - POSTGRES_USER=tokenApi
+        - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
     ports:
       - "8080:8080"
     depends_on:
@@ -23,6 +30,7 @@ services:
       - db-data:/var/lib/postgresql
     environment:
       - POSTGRES_DB=tokens
+      - POSTGRES_USER=tokenApi
       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
     expose:
       - 5432
