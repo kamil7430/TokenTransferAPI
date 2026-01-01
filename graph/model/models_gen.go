@@ -7,8 +7,3 @@ type Mutation struct {
 
 type Query struct {
 }
-
-type Wallet struct {
-	Address string `json:"address"`
-	Tokens  string `json:"tokens"`
-}
