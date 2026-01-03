@@ -7,14 +7,13 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/kamil7430/TokenTransferAPI/graph/model"
 )
 
 // CreateWallet is the resolver for the createWallet field.
-func (r *mutationResolver) CreateWallet(ctx context.Context, address string) (*model.Wallet, error) {
-	panic(fmt.Errorf("not implemented: CreateWallet - createWallet"))
+func (r *mutationResolver) CreateWallet(ctx context.Context, address string, tokens int) (*model.Wallet, error) {
+	return r.WalletService.TryCreateWallet(ctx, address, tokens)
 }
 
 // Transfer is the resolver for the transfer field.

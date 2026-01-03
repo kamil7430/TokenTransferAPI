@@ -39,3 +39,11 @@ func (d *DatabaseWalletRepository) UpdateWalletTokensByAddress(ctx context.Conte
 	}
 	return nil
 }
+
+func (d *DatabaseWalletRepository) AddWallet(ctx context.Context, tx *gorm.DB, wallet *model.Wallet) error {
+	err := gorm.G[model.Wallet](tx).Create(ctx, wallet)
+	if err != nil {
+		return err
+	}
+	return nil
+}

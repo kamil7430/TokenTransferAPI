@@ -48,7 +48,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateWallet func(childComplexity int, address string) int
+		CreateWallet func(childComplexity int, address string, tokens int) int
 		Transfer     func(childComplexity int, fromAddress string, toAddress string, amount int) int
 	}
 
@@ -63,7 +63,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateWallet(ctx context.Context, address string) (*model.Wallet, error)
+	CreateWallet(ctx context.Context, address string, tokens int) (*model.Wallet, error)
 	Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error)
 }
 type QueryResolver interface {
@@ -99,7 +99,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateWallet(childComplexity, args["address"].(string)), true
+		return e.complexity.Mutation.CreateWallet(childComplexity, args["address"].(string), args["tokens"].(int)), true
 	case "Mutation.transfer":
 		if e.complexity.Mutation.Transfer == nil {
 			break
@@ -268,6 +268,11 @@ func (ec *executionContext) field_Mutation_createWallet_args(ctx context.Context
 		return nil, err
 	}
 	args["address"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "tokens", ec.unmarshalNInt642int)
+	if err != nil {
+		return nil, err
+	}
+	args["tokens"] = arg1
 	return args, nil
 }
 
@@ -374,7 +379,7 @@ func (ec *executionContext) _Mutation_createWallet(ctx context.Context, field gr
 		ec.fieldContext_Mutation_createWallet,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateWallet(ctx, fc.Args["address"].(string))
+			return ec.resolvers.Mutation().CreateWallet(ctx, fc.Args["address"].(string), fc.Args["tokens"].(int))
 		},
 		nil,
 		ec.marshalOWallet2ᚖgithubᚗcomᚋkamil7430ᚋTokenTransferAPIᚋgraphᚋmodelᚐWallet,
