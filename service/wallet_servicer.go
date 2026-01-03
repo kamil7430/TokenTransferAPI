@@ -7,6 +7,6 @@ import (
 )
 
 type WalletServicer interface {
-	GetWalletByAddress(ctx context.Context, address string) (*model.Wallet, error)
+	GetWallet(ctx context.Context, address string) (*model.Wallet, error)
 	Transfer(ctx context.Context, fromAddress string, toAddress string, amount string) (string, error)
 }

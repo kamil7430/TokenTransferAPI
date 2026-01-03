@@ -8,15 +8,19 @@ import (
 )
 
 type DatabaseWalletRepository struct {
-	Database *gorm.DB
 }
 
-func (d DatabaseWalletRepository) GetWalletByAddress(ctx context.Context, address string) (*model.Wallet, error) {
+func (d DatabaseWalletRepository) GetWalletByAddress(ctx context.Context, tx *gorm.DB, address string) (*model.Wallet, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (d DatabaseWalletRepository) UpdateWalletByAddress(ctx context.Context, address string, wallet *model.Wallet) error {
+func (d DatabaseWalletRepository) GetWalletByAddressForUpdate(ctx context.Context, tx *gorm.DB, address string) (*model.Wallet, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d DatabaseWalletRepository) UpdateWalletByAddress(ctx context.Context, tx *gorm.DB, address string, wallet *model.Wallet) error {
 	//TODO implement me
 	panic("implement me")
 }

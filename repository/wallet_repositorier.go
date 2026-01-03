@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/kamil7430/TokenTransferAPI/graph/model"
+	"gorm.io/gorm"
 )
 
 type WalletRepositorier interface { // Strange interface naming convention in Go
-	GetWalletByAddress(ctx context.Context, address string) (*model.Wallet, error)
-	UpdateWalletByAddress(ctx context.Context, address string, wallet *model.Wallet) error
+	GetWalletByAddress(ctx context.Context, tx *gorm.DB, address string) (*model.Wallet, error)
+	GetWalletByAddressForUpdate(ctx context.Context, tx *gorm.DB, address string) (*model.Wallet, error)
+	UpdateWalletByAddress(ctx context.Context, tx *gorm.DB, address string, wallet *model.Wallet) error
 }

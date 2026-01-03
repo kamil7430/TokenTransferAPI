@@ -48,9 +48,8 @@ func main() {
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{
 			WalletService: &service.WalletService{
-				WalletRepository: &repository.DatabaseWalletRepository{
-					Database: db,
-				},
+				WalletRepository: &repository.DatabaseWalletRepository{},
+				Database:         db,
 			},
 		},
 	}))
