@@ -7,19 +7,18 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/kamil7430/TokenTransferAPI/graph/model"
 )
 
 // Transfer is the resolver for the transfer field.
 func (r *mutationResolver) Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error) {
-	panic(fmt.Errorf("not implemented: Transfer - transfer"))
+	return r.WalletService.Transfer(ctx, fromAddress, toAddress, amount)
 }
 
 // Wallet is the resolver for the wallet field.
 func (r *queryResolver) Wallet(ctx context.Context, address string) (*model.Wallet, error) {
-	panic(fmt.Errorf("not implemented: Wallet - wallet"))
+	return r.WalletService.GetWallet(ctx, address)
 }
 
 // Mutation returns MutationResolver implementation.
