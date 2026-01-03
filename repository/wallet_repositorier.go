@@ -10,5 +10,5 @@ import (
 type WalletRepositorier interface { // Strange interface naming convention in Go
 	GetWalletByAddress(ctx context.Context, tx *gorm.DB, address string) (*model.Wallet, error)
 	GetWalletByAddressForUpdate(ctx context.Context, tx *gorm.DB, address string) (*model.Wallet, error)
-	UpdateWalletTokensByAddress(ctx context.Context, tx *gorm.DB, address string, tokens string) error
+	UpdateWalletTokensByAddress(ctx context.Context, tx *gorm.DB, address string, tokens int) error
 }

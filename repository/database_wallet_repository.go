@@ -29,7 +29,7 @@ func (d *DatabaseWalletRepository) GetWalletByAddressForUpdate(ctx context.Conte
 	return &wallet, nil
 }
 
-func (d *DatabaseWalletRepository) UpdateWalletTokensByAddress(ctx context.Context, tx *gorm.DB, address string, tokens string) error {
+func (d *DatabaseWalletRepository) UpdateWalletTokensByAddress(ctx context.Context, tx *gorm.DB, address string, tokens int) error {
 	rows, err := gorm.G[model.Wallet](tx).Where("Address = ?", address).Update(ctx, "Tokens", tokens)
 	if err != nil {
 		return err
