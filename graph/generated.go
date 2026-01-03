@@ -48,7 +48,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		Transfer func(childComplexity int, fromAddress string, toAddress string, amount string) int
+		Transfer func(childComplexity int, fromAddress string, toAddress string, amount int) int
 	}
 
 	Query struct {
@@ -62,7 +62,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	Transfer(ctx context.Context, fromAddress string, toAddress string, amount string) (string, error)
+	Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error)
 }
 type QueryResolver interface {
 	Wallet(ctx context.Context, address string) (*model.Wallet, error)
@@ -97,7 +97,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Transfer(childComplexity, args["from_address"].(string), args["to_address"].(string), args["amount"].(string)), true
+		return e.complexity.Mutation.Transfer(childComplexity, args["from_address"].(string), args["to_address"].(string), args["amount"].(int)), true
 
 	case "Query.wallet":
 		if e.complexity.Query.Wallet == nil {
@@ -260,7 +260,7 @@ func (ec *executionContext) field_Mutation_transfer_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["to_address"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "amount", ec.unmarshalNBigInt2string)
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "amount", ec.unmarshalNInt642int)
 	if err != nil {
 		return nil, err
 	}
@@ -350,10 +350,10 @@ func (ec *executionContext) _Mutation_transfer(ctx context.Context, field graphq
 		ec.fieldContext_Mutation_transfer,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().Transfer(ctx, fc.Args["from_address"].(string), fc.Args["to_address"].(string), fc.Args["amount"].(string))
+			return ec.resolvers.Mutation().Transfer(ctx, fc.Args["from_address"].(string), fc.Args["to_address"].(string), fc.Args["amount"].(int))
 		},
 		nil,
-		ec.marshalNBigInt2string,
+		ec.marshalNInt642int,
 		true,
 		true,
 	)
@@ -366,7 +366,7 @@ func (ec *executionContext) fieldContext_Mutation_transfer(ctx context.Context, 
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type Int64 does not have child fields")
 		},
 	}
 	defer func() {
@@ -577,7 +577,7 @@ func (ec *executionContext) _Wallet_tokens(ctx context.Context, field graphql.Co
 			return obj.Tokens, nil
 		},
 		nil,
-		ec.marshalNBigInt2string,
+		ec.marshalNInt642int,
 		true,
 		true,
 	)
@@ -590,7 +590,7 @@ func (ec *executionContext) fieldContext_Wallet_tokens(_ context.Context, field 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			return nil, errors.New("field of type Int64 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2566,22 +2566,6 @@ func (ec *executionContext) marshalNAddress2string(ctx context.Context, sel ast.
 	return res
 }
 
-func (ec *executionContext) unmarshalNBigInt2string(ctx context.Context, v any) (string, error) {
-	res, err := graphql.UnmarshalString(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNBigInt2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2590,6 +2574,22 @@ func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (
 func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt642int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt642int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")

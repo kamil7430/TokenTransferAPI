@@ -5,5 +5,5 @@ import "gorm.io/gorm"
 type Wallet struct {
 	gorm.Model
 	Address string `json:"address" gorm:"unique"`
-	Tokens  string `json:"tokens"`
+	Tokens  int    `json:"tokens"`
 }

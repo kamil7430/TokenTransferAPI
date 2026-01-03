@@ -1,12 +1,11 @@
 "40-digit hexadecimal wallet address, represented as string: 0x..."
 scalar Address
 
-"256-bit integer represented as string"
-scalar BigInt
+scalar Int64
 
 type Wallet {
   address: Address!
-  tokens: BigInt!
+  tokens: Int64!
 }
 
 type Mutation {
@@ -14,7 +13,7 @@ type Mutation {
   Concurrent-safe mutation that transfers `amount` tokens from wallet
   with `from_address` address to wallet with `to_address` address.
   """
-  transfer(from_address: Address!, to_address: Address!, amount: BigInt!): BigInt!
+  transfer(from_address: Address!, to_address: Address!, amount: Int64!): Int64!
 }
 
 type Query {

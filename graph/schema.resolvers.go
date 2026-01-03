@@ -13,7 +13,7 @@ import (
 )
 
 // Transfer is the resolver for the transfer field.
-func (r *mutationResolver) Transfer(ctx context.Context, fromAddress string, toAddress string, amount string) (string, error) {
+func (r *mutationResolver) Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error) {
 	panic(fmt.Errorf("not implemented: Transfer - transfer"))
 }
 
