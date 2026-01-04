@@ -81,30 +81,18 @@ func (d *WalletService) TryCreateWallet(ctx context.Context, address string, tok
 		return nil, err
 	}
 
-	var wallet *model.Wallet = nil
+	newWallet := &model.Wallet{
+		Address: address,
+		Tokens:  tokens,
+	}
 
-	err = d.Database.Transaction(func(tx *gorm.DB) error {
-		_, intErr := d.WalletRepository.GetWalletByAddress(ctx, tx, address)
-		if intErr == nil {
-			return errors.New("wallet with this address already exists")
+	err = d.WalletRepository.AddWallet(ctx, d.Database, newWallet)
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return nil, errors.New("wallet with this address already exists")
 		}
-		if !errors.Is(intErr, gorm.ErrRecordNotFound) {
-			return intErr
-		}
+		return nil, err
+	}
 
-		newWallet := &model.Wallet{
-			Address: address,
-			Tokens:  tokens,
-		}
-
-		intErr = d.WalletRepository.AddWallet(ctx, tx, newWallet)
-		if intErr != nil {
-			return intErr
-		}
-
-		wallet = newWallet
-		return nil
-	})
-
-	return wallet, err
+	return newWallet, nil
 }
