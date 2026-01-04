@@ -20,6 +20,7 @@ func (d *WalletService) GetWallet(ctx context.Context, address string) (*model.W
 
 func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error) {
 	//TODO: avoid deadlocks (smaller/bigger address first)
+	//TODO: add checks for negative amount, etc.
 	var newBalance int
 
 	err := d.Database.Transaction(func(tx *gorm.DB) error {
