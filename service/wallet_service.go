@@ -24,6 +24,7 @@ func (d *WalletService) GetWallet(ctx context.Context, address string) (*model.W
 }
 
 func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error) {
+	//TODO: should the function create not-found wallet?
 	if amount <= 0 {
 		return -1, errors.New("amount must be greater than zero")
 	}
@@ -37,23 +38,37 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 		return -1, err
 	}
 
-	//TODO: avoid deadlocks (smaller/bigger address first)
-	//TODO: should the function create not-found wallet?
+	// To avoid deadlocks, the wallets are queried in specific order.
+	// Lexicographically smaller wallet is queried first. This guarantees
+	// that no cycles of dependencies will occur.
+	firstAddress, secondAddress := fromAddress, toAddress
+	addressesFlipped := false
+	if firstAddress > toAddress {
+		firstAddress, secondAddress = secondAddress, firstAddress
+		addressesFlipped = true
+	}
+
 	var newBalance int
 
 	err = d.Database.Transaction(func(tx *gorm.DB) error {
-		fromWallet, intErr := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, fromAddress)
+		firstWallet, intErr := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, firstAddress)
 		if intErr != nil {
 			return intErr // rollback on any error
 		}
 
-		if fromWallet.Tokens < amount {
-			return errors.New("insufficient balance")
-		}
-
-		toWallet, intErr := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, toAddress)
+		secondWallet, intErr := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, secondAddress)
 		if intErr != nil {
 			return intErr
+		}
+
+		// Since both records are locked, there is no need to stick to the order any longer.
+		fromWallet, toWallet := firstWallet, secondWallet
+		if addressesFlipped {
+			fromWallet, toWallet = toWallet, fromWallet
+		}
+
+		if fromWallet.Tokens < amount {
+			return errors.New("insufficient balance")
 		}
 
 		newFromWalletBalance := fromWallet.Tokens - amount
