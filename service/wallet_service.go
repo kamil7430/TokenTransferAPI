@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/kamil7430/TokenTransferAPI/graph/model"
+	"github.com/kamil7430/TokenTransferAPI/helper/address_helper"
 	"github.com/kamil7430/TokenTransferAPI/repository"
 	"gorm.io/gorm"
 )
@@ -15,15 +16,28 @@ type WalletService struct {
 }
 
 func (d *WalletService) GetWallet(ctx context.Context, address string) (*model.Wallet, error) {
+	err := address_helper.CheckAddress(address)
+	if err != nil {
+		return nil, err
+	}
 	return d.WalletRepository.GetWalletByAddress(ctx, d.Database, address)
 }
 
 func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error) {
+	err := address_helper.CheckAddress(fromAddress)
+	if err != nil {
+		return -1, err
+	}
+	err = address_helper.CheckAddress(toAddress)
+	if err != nil {
+		return -1, err
+	}
+
 	//TODO: avoid deadlocks (smaller/bigger address first)
 	//TODO: add checks for negative amount, etc.
 	var newBalance int
 
-	err := d.Database.Transaction(func(tx *gorm.DB) error {
+	err = d.Database.Transaction(func(tx *gorm.DB) error {
 		fromWallet, intErr := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, fromAddress)
 		if intErr != nil {
 			return intErr // rollback on any error
@@ -62,9 +76,14 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 }
 
 func (d *WalletService) TryCreateWallet(ctx context.Context, address string, tokens int) (*model.Wallet, error) {
+	err := address_helper.CheckAddress(address)
+	if err != nil {
+		return nil, err
+	}
+
 	var wallet *model.Wallet = nil
 
-	err := d.Database.Transaction(func(tx *gorm.DB) error {
+	err = d.Database.Transaction(func(tx *gorm.DB) error {
 		_, intErr := d.WalletRepository.GetWalletByAddress(ctx, tx, address)
 		if intErr == nil {
 			return errors.New("wallet with this address already exists")
