@@ -24,6 +24,10 @@ func (d *WalletService) GetWallet(ctx context.Context, address string) (*model.W
 }
 
 func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error) {
+	if amount <= 0 {
+		return -1, errors.New("amount must be greater than zero")
+	}
+
 	err := address_helper.CheckAddress(fromAddress)
 	if err != nil {
 		return -1, err
@@ -34,7 +38,7 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 	}
 
 	//TODO: avoid deadlocks (smaller/bigger address first)
-	//TODO: add checks for negative amount, etc.
+	//TODO: should the function create not-found wallet?
 	var newBalance int
 
 	err = d.Database.Transaction(func(tx *gorm.DB) error {
