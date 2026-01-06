@@ -45,9 +45,7 @@ func main() {
 	err = db.AutoMigrate(&model.Wallet{})
 	fatalIfError(err)
 
-	repo := &repository.DatabaseWalletRepository{}
-
-	// Add initial wallet with 1 000 000 tokens (this will fail if wallet exists)
+	// Add initial wallet with 1 000 000 tokens (once)
 	err = db.Where(model.Wallet{Address: "0x0000000000000000000000000000000000000000"}).
 		FirstOrCreate(&model.Wallet{
 			Address: "0x0000000000000000000000000000000000000000",
@@ -58,7 +56,7 @@ func main() {
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{
 			WalletService: &service.WalletService{
-				WalletRepository: repo,
+				WalletRepository: &repository.DatabaseWalletRepository{},
 				Database:         db,
 			},
 		},
