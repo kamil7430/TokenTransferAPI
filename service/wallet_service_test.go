@@ -89,4 +89,45 @@ func TestWalletService(t *testing.T) {
 		require.Equal(t, "0x0000000000000000000000000000000000000002", toWallet.Address)
 		require.Equal(t, 260, toWallet.Tokens)
 	})
+
+	t.Run("transfer negative token amount", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 100)
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 200)
+
+		_, err := d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", -60)
+		require.Error(t, err)
+	})
+
+	t.Run("transfer amount higher than wallet balance", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 100)
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 0)
+
+		_, err := d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 260)
+		require.Error(t, err)
+	})
+
+	t.Run("transfer from non-existing wallet", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 100)
+
+		_, err := d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 60)
+		require.Error(t, err)
+	})
+
+	t.Run("transfer to non-existing wallet", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 100)
+
+		_, err := d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 60)
+		require.Error(t, err)
+	})
+
+	//t.Run("parallel transfer", func(t *testing.T) {
+	//	db.Exec("TRUNCATE TABLE Wallets")
+	//	db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 10)
+	//	db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 10)
+	//
+	//})
 }
