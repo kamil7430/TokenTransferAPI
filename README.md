@@ -30,7 +30,7 @@ The tests require Docker running. You can run tests using the following command:
 go test ./...
 ```
 
-If the tests are stuck on container creation, try to pull them by yourself:
+If the tests are stuck on container creation, try to pull the image by yourself:
 
 ```bash
 docker pull postgres:16-alpine
