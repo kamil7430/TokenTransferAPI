@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/kamil7430/TokenTransferAPI/graph/model"
@@ -132,10 +133,102 @@ func TestWalletService(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	//t.Run("parallel transfer", func(t *testing.T) {
-	//	db.Exec("TRUNCATE TABLE Wallets")
-	//	db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 10)
-	//	db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 10)
-	//
-	//})
+	t.Run("parallel transfer example from task", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 10)
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 10)
+
+		const concurrentRoutines = 3
+		barrier := make(chan struct{})
+
+		var workWG sync.WaitGroup
+		workWG.Add(concurrentRoutines)
+
+		var barrierWG sync.WaitGroup
+		barrierWG.Add(concurrentRoutines)
+
+		// 7 tokens from 1 to 2
+		go func() {
+			barrierWG.Done() // report readiness to start
+			<-barrier        // wait on barrier
+			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 7)
+			// no error checking because it can either succeed or fail
+			workWG.Done()
+		}()
+
+		// 4 tokens from 1 to 2
+		go func() {
+			barrierWG.Done()
+			<-barrier
+			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 4)
+			workWG.Done()
+		}()
+
+		// 1 token from 2 to 1
+		go func() {
+			barrierWG.Done()
+			<-barrier
+			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000001", 1)
+			workWG.Done()
+		}()
+
+		barrierWG.Wait() // wait for all go routines to get ready
+		close(barrier)   // unblock all the go routines waiting on the barrier
+		workWG.Wait()    // wait for all go routines to finish
+
+		wallet1, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000001")
+		require.NoError(t, err)
+		wallet2, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000002")
+		require.NoError(t, err)
+
+		require.Condition(t, func() bool {
+			return (wallet1.Tokens == 7 && wallet2.Tokens == 13) ||
+				(wallet1.Tokens == 4 && wallet2.Tokens == 16) ||
+				(wallet1.Tokens == 0 && wallet2.Tokens == 20)
+		})
+	})
+
+	t.Run("cross transfer", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 15)
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 10)
+
+		const concurrentRoutines = 2
+		barrier := make(chan struct{})
+
+		var workWG sync.WaitGroup
+		workWG.Add(concurrentRoutines)
+
+		var barrierWG sync.WaitGroup
+		barrierWG.Add(concurrentRoutines)
+
+		// 15 tokens from 1 to 2
+		go func() {
+			barrierWG.Done()
+			<-barrier
+			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 15)
+			workWG.Done()
+		}()
+
+		// 15 tokens from 2 to 1
+		go func() {
+			barrierWG.Done()
+			<-barrier
+			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000001", 15)
+			workWG.Done()
+		}()
+
+		barrierWG.Wait()
+		close(barrier)
+		workWG.Wait()
+
+		wallet1, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000001")
+		require.NoError(t, err)
+		wallet2, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000002")
+		require.NoError(t, err)
+
+		require.Condition(t, func() bool {
+			return (wallet1.Tokens == 15 && wallet2.Tokens == 10) || (wallet1.Tokens == 0 && wallet2.Tokens == 25)
+		})
+	})
 }
