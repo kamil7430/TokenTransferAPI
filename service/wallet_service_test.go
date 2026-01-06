@@ -124,6 +124,14 @@ func TestWalletService(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("transfer to own wallet", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 100)
+
+		_, err := d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000001", 60)
+		require.Error(t, err)
+	})
+
 	//t.Run("parallel transfer", func(t *testing.T) {
 	//	db.Exec("TRUNCATE TABLE Wallets")
 	//	db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 10)

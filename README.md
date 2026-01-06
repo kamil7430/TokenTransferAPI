@@ -30,6 +30,12 @@ The tests require Docker running. You can run tests using the following command:
 go test ./...
 ```
 
+If the tests are stuck on container creation, try to pull them by yourself:
+
+```bash
+docker pull postgres:16-alpine
+```
+
 ## GraphQL operations
 
 ### Queries
@@ -65,7 +71,7 @@ mutation {
     }
     
     # Transfer some tokens
-    transfer(from_address: "0x0000000000000000000000000000000000000000", to_address: "0x0000000000000000000000000000000000000000", amount: 200)
+    transfer(from_address: "0x0000000000000000000000000000000000000000", to_address: "0x0000000000000000000000000000000000000001", amount: 200)
 }
 ```
 

@@ -27,6 +27,9 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 	if amount <= 0 {
 		return -1, errors.New("amount must be greater than zero")
 	}
+	if fromAddress == toAddress {
+		return -1, errors.New("from and to addresses cannot equal")
+	}
 
 	err := address_helper.CheckAddress(fromAddress)
 	if err != nil {
