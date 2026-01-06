@@ -24,7 +24,6 @@ func (d *WalletService) GetWallet(ctx context.Context, address string) (*model.W
 }
 
 func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error) {
-	//TODO: should the function create not-found wallet?
 	if amount <= 0 {
 		return -1, errors.New("amount must be greater than zero")
 	}
@@ -51,6 +50,7 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 	var newBalance int
 
 	err = d.Database.Transaction(func(tx *gorm.DB) error {
+		// Since it's not specified in the task, I assume that both wallets should exist on transfer.
 		firstWallet, intErr := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, firstAddress)
 		if intErr != nil {
 			return intErr // rollback on any error
