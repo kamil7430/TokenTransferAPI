@@ -206,7 +206,7 @@ func TestWalletService(t *testing.T) {
 		go func() {
 			barrierWG.Done()
 			<-barrier
-			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 15)
+			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 10)
 			workWG.Done()
 		}()
 
@@ -214,7 +214,7 @@ func TestWalletService(t *testing.T) {
 		go func() {
 			barrierWG.Done()
 			<-barrier
-			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000001", 15)
+			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000001", 10)
 			workWG.Done()
 		}()
 
@@ -227,8 +227,7 @@ func TestWalletService(t *testing.T) {
 		wallet2, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000002")
 		require.NoError(t, err)
 
-		require.Condition(t, func() bool {
-			return (wallet1.Tokens == 15 && wallet2.Tokens == 10) || (wallet1.Tokens == 0 && wallet2.Tokens == 25)
-		})
+		require.Equal(t, 15, wallet1.Tokens)
+		require.Equal(t, 10, wallet2.Tokens)
 	})
 }
