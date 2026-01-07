@@ -205,16 +205,18 @@ func TestWalletService(t *testing.T) {
 		go func() {
 			barrierWG.Done()
 			<-barrier
-			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 10)
+			_, err = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 10)
 			workWG.Done()
+			require.NoError(t, err)
 		}()
 
 		// 15 tokens from 2 to 1
 		go func() {
 			barrierWG.Done()
 			<-barrier
-			_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000001", 10)
+			_, err = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000001", 10)
 			workWG.Done()
+			require.NoError(t, err)
 		}()
 
 		barrierWG.Wait()
@@ -248,8 +250,9 @@ func TestWalletService(t *testing.T) {
 			go func() {
 				barrierWG.Done()
 				<-barrier
-				_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 5)
+				_, err = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 5)
 				workWG.Done()
+				require.NoError(t, err)
 			}()
 		}
 
@@ -272,6 +275,7 @@ func TestWalletService(t *testing.T) {
 		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 2000)
 		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000003", 500)
 
+		// Increasing this number too much will make database reject connections (too many clients error)
 		const concurrentRoutines = 30
 		barrier := make(chan struct{})
 
@@ -286,8 +290,9 @@ func TestWalletService(t *testing.T) {
 			go func() {
 				barrierWG.Done()
 				<-barrier
-				_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 10)
+				_, err = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 10)
 				workWG.Done()
+				require.NoError(t, err)
 			}()
 		}
 
@@ -296,8 +301,9 @@ func TestWalletService(t *testing.T) {
 			go func() {
 				barrierWG.Done()
 				<-barrier
-				_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000003", 10)
+				_, err = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000003", 10)
 				workWG.Done()
+				require.NoError(t, err)
 			}()
 		}
 
@@ -306,8 +312,9 @@ func TestWalletService(t *testing.T) {
 			go func() {
 				barrierWG.Done()
 				<-barrier
-				_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000003", "0x0000000000000000000000000000000000000001", 5)
+				_, err = d.Transfer(ctx, "0x0000000000000000000000000000000000000003", "0x0000000000000000000000000000000000000001", 5)
 				workWG.Done()
+				require.NoError(t, err)
 			}()
 		}
 
