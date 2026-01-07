@@ -265,4 +265,65 @@ func TestWalletService(t *testing.T) {
 		require.Equal(t, 5, wallet1.Tokens)
 		require.Equal(t, 10, wallet2.Tokens)
 	})
+
+	t.Run("massive parallel transfers between three wallets", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 1000)
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 2000)
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000003", 500)
+
+		const concurrentRoutines = 30
+		barrier := make(chan struct{})
+
+		var workWG sync.WaitGroup
+		workWG.Add(concurrentRoutines)
+
+		var barrierWG sync.WaitGroup
+		barrierWG.Add(concurrentRoutines)
+
+		// 10 times: 10 tokens from 1 to 2
+		for i := 0; i < concurrentRoutines/3; i++ {
+			go func() {
+				barrierWG.Done()
+				<-barrier
+				_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 10)
+				workWG.Done()
+			}()
+		}
+
+		// 10 times: 10 tokens from 2 to 3
+		for i := 0; i < concurrentRoutines/3; i++ {
+			go func() {
+				barrierWG.Done()
+				<-barrier
+				_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000003", 10)
+				workWG.Done()
+			}()
+		}
+
+		// 10 times: 5 tokens from 3 to 1
+		for i := 0; i < concurrentRoutines/3; i++ {
+			go func() {
+				barrierWG.Done()
+				<-barrier
+				_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000003", "0x0000000000000000000000000000000000000001", 5)
+				workWG.Done()
+			}()
+		}
+
+		barrierWG.Wait()
+		close(barrier)
+		workWG.Wait()
+
+		wallet1, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000001")
+		require.NoError(t, err)
+		wallet2, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000002")
+		require.NoError(t, err)
+		wallet3, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000003")
+		require.NoError(t, err)
+
+		require.Equal(t, 950, wallet1.Tokens)
+		require.Equal(t, 2000, wallet2.Tokens)
+		require.Equal(t, 550, wallet3.Tokens)
+	})
 }
