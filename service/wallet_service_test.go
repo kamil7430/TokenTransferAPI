@@ -132,7 +132,7 @@ func TestWalletService(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("parallel transfer example from task", func(t *testing.T) {
+	t.Run("parallel transfers example from task", func(t *testing.T) {
 		db.Exec("TRUNCATE TABLE Wallets")
 		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 10)
 		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000002", 10)
@@ -227,6 +227,42 @@ func TestWalletService(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, 15, wallet1.Tokens)
+		require.Equal(t, 10, wallet2.Tokens)
+	})
+
+	t.Run("parallel transfers to non-existing wallet", func(t *testing.T) {
+		db.Exec("TRUNCATE TABLE Wallets")
+		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 15)
+
+		const concurrentRoutines = 2
+		barrier := make(chan struct{})
+
+		var workWG sync.WaitGroup
+		workWG.Add(concurrentRoutines)
+
+		var barrierWG sync.WaitGroup
+		barrierWG.Add(concurrentRoutines)
+
+		// two times: 5 tokens from 1 to 2
+		for i := 0; i < concurrentRoutines; i++ {
+			go func() {
+				barrierWG.Done()
+				<-barrier
+				_, _ = d.Transfer(ctx, "0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002", 5)
+				workWG.Done()
+			}()
+		}
+
+		barrierWG.Wait()
+		close(barrier)
+		workWG.Wait()
+
+		wallet1, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000001")
+		require.NoError(t, err)
+		wallet2, err := d.GetWallet(ctx, "0x0000000000000000000000000000000000000002")
+		require.NoError(t, err)
+
+		require.Equal(t, 5, wallet1.Tokens)
 		require.Equal(t, 10, wallet2.Tokens)
 	})
 }
