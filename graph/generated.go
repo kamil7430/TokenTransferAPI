@@ -48,8 +48,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateWallet func(childComplexity int, address string, tokens int) int
-		Transfer     func(childComplexity int, fromAddress string, toAddress string, amount int) int
+		Transfer func(childComplexity int, fromAddress string, toAddress string, amount int) int
 	}
 
 	Query struct {
@@ -63,7 +62,6 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateWallet(ctx context.Context, address string, tokens int) (*model.Wallet, error)
 	Transfer(ctx context.Context, fromAddress string, toAddress string, amount int) (int, error)
 }
 type QueryResolver interface {
@@ -89,17 +87,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Mutation.createWallet":
-		if e.complexity.Mutation.CreateWallet == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createWallet_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateWallet(childComplexity, args["address"].(string), args["tokens"].(int)), true
 	case "Mutation.transfer":
 		if e.complexity.Mutation.Transfer == nil {
 			break
@@ -260,22 +247,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_createWallet_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "address", ec.unmarshalNAddress2string)
-	if err != nil {
-		return nil, err
-	}
-	args["address"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "tokens", ec.unmarshalNInt642int)
-	if err != nil {
-		return nil, err
-	}
-	args["tokens"] = arg1
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_transfer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -370,53 +341,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _Mutation_createWallet(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_createWallet,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateWallet(ctx, fc.Args["address"].(string), fc.Args["tokens"].(int))
-		},
-		nil,
-		ec.marshalOWallet2ᚖgithubᚗcomᚋkamil7430ᚋTokenTransferAPIᚋgraphᚋmodelᚐWallet,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createWallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "address":
-				return ec.fieldContext_Wallet_address(ctx, field)
-			case "tokens":
-				return ec.fieldContext_Wallet_tokens(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Wallet", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createWallet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
 
 func (ec *executionContext) _Mutation_transfer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -2145,10 +2069,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "createWallet":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createWallet(ctx, field)
-			})
 		case "transfer":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_transfer(ctx, field)
@@ -3007,13 +2927,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
-}
-
-func (ec *executionContext) marshalOWallet2ᚖgithubᚗcomᚋkamil7430ᚋTokenTransferAPIᚋgraphᚋmodelᚐWallet(ctx context.Context, sel ast.SelectionSet, v *model.Wallet) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Wallet(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

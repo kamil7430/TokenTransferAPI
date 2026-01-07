@@ -10,11 +10,6 @@ type Wallet {
 
 type Mutation {
   """
-  Mutation that initializes a new wallet with `tokens` tokens.
-  Returns the new wallet or null if there exists a wallet under that address.
-  """
-  createWallet(address: Address!, tokens: Int64!): Wallet
-  """
   Concurrent-safe mutation that transfers `amount` tokens from wallet
   with `from_address` address to wallet with `to_address` address.
   """

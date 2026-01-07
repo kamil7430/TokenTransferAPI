@@ -96,25 +96,3 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 
 	return newBalance, nil
 }
-
-func (d *WalletService) TryCreateWallet(ctx context.Context, address string, tokens int) (*model.Wallet, error) {
-	err := address_helper.CheckAddress(address)
-	if err != nil {
-		return nil, err
-	}
-
-	newWallet := &model.Wallet{
-		Address: address,
-		Tokens:  tokens,
-	}
-
-	err = d.WalletRepository.AddWallet(ctx, d.Database, newWallet)
-	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return nil, errors.New("wallet with this address already exists")
-		}
-		return nil, err
-	}
-
-	return newWallet, nil
-}

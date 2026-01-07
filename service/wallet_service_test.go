@@ -49,18 +49,6 @@ func TestWalletService(t *testing.T) {
 		Database:         db,
 	}
 
-	//t.Run("create wallet", func(t *testing.T) {
-	//	db.Exec("TRUNCATE TABLE Wallets")
-	//
-	//	wallet, err := d.TryCreateWallet(ctx, "0x0000000000000000000000000000000000000001", 100)
-	//	require.NoError(t, err)
-	//	require.Equal(t, 100, wallet.Tokens)
-	//	require.Equal(t, "0x0000000000000000000000000000000000000001", wallet.Address)
-	//
-	//	wallet, err = d.TryCreateWallet(ctx, "0x0000000000000000000000000000000000000001", 150)
-	//	require.Error(t, err)
-	//})
-
 	t.Run("get wallet", func(t *testing.T) {
 		db.Exec("TRUNCATE TABLE Wallets")
 		db.Exec("INSERT INTO Wallets(Address, Tokens) VALUES ($1, $2)", "0x0000000000000000000000000000000000000001", 100)
