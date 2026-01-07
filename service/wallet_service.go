@@ -28,7 +28,7 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 		return -1, errors.New("amount must be greater than zero")
 	}
 	if fromAddress == toAddress {
-		return -1, errors.New("from and to addresses cannot equal")
+		return -1, errors.New("from and to addresses cannot be equal")
 	}
 
 	err := address_helper.CheckAddress(fromAddress)
@@ -40,34 +40,36 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 		return -1, err
 	}
 
-	// To avoid deadlocks, the wallets are queried in specific order.
-	// Lexicographically smaller wallet is queried first. This guarantees
-	// that no cycles of dependencies will occur.
-	firstAddress, secondAddress := fromAddress, toAddress
-	addressesFlipped := false
-	if firstAddress > toAddress {
-		firstAddress, secondAddress = secondAddress, firstAddress
-		addressesFlipped = true
-	}
-
 	var newBalance int
 
 	err = d.Database.Transaction(func(tx *gorm.DB) error {
-		// Since it's not specified in the task, I assume that both wallets should exist on transfer.
-		firstWallet, intErr := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, firstAddress)
-		if intErr != nil {
-			return intErr // rollback on any error
-		}
+		var fromWallet *model.Wallet
+		var toWallet *model.Wallet
+		var err error
 
-		secondWallet, intErr := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, secondAddress)
-		if intErr != nil {
-			return intErr
-		}
+		// To avoid deadlocks, the wallets are queried in specific order.
+		// Lexicographically smaller wallet is queried first. This guarantees
+		// that no cycles of dependencies will occur.
+		if fromAddress < toAddress {
+			fromWallet, err = d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, fromAddress)
+			if err != nil {
+				return err
+			}
 
-		// Since both records are locked, there is no need to stick to the order any longer.
-		fromWallet, toWallet := firstWallet, secondWallet
-		if addressesFlipped {
-			fromWallet, toWallet = toWallet, fromWallet
+			toWallet, err = d.getToWallet(ctx, tx, toAddress)
+			if err != nil {
+				return err
+			}
+		} else { // toAddress < fromAddress
+			toWallet, err = d.getToWallet(ctx, tx, toAddress)
+			if err != nil {
+				return err
+			}
+
+			fromWallet, err = d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, fromAddress)
+			if err != nil {
+				return err
+			}
 		}
 
 		if fromWallet.Tokens < amount {
@@ -77,14 +79,15 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 		newFromWalletBalance := fromWallet.Tokens - amount
 		newToWalletBalance := toWallet.Tokens + amount
 
-		intErr = d.WalletRepository.UpdateWalletTokensByAddress(ctx, tx, fromAddress, newFromWalletBalance)
-		if intErr != nil {
-			return intErr
+		// Since both records are locked, there is no need to stick to the order any longer.
+		err = d.WalletRepository.UpdateWalletTokensByAddress(ctx, tx, fromAddress, newFromWalletBalance)
+		if err != nil {
+			return err
 		}
 
-		intErr = d.WalletRepository.UpdateWalletTokensByAddress(ctx, tx, toAddress, newToWalletBalance)
-		if intErr != nil {
-			return intErr
+		err = d.WalletRepository.UpdateWalletTokensByAddress(ctx, tx, toAddress, newToWalletBalance)
+		if err != nil {
+			return err
 		}
 
 		newBalance = newFromWalletBalance
@@ -95,4 +98,28 @@ func (d *WalletService) Transfer(ctx context.Context, fromAddress string, toAddr
 	}
 
 	return newBalance, nil
+}
+
+func (d *WalletService) getToWallet(ctx context.Context, tx *gorm.DB, toAddress string) (*model.Wallet, error) {
+	toWallet, err := d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, toAddress)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = d.WalletRepository.AddWallet(ctx, tx, &model.Wallet{
+				Address: toAddress,
+				Tokens:  0,
+			})
+			if err != nil && !errors.Is(err, gorm.ErrDuplicatedKey) {
+				return nil, err
+			}
+
+			toWallet, err = d.WalletRepository.GetWalletByAddressForUpdate(ctx, tx, toAddress)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+
+	return toWallet, err
 }

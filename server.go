@@ -39,7 +39,9 @@ func main() {
 
 	dsn := fmt.Sprintf("host=db user=%s password=%s dbname=%s port=%s sslmode=disable",
 		dbUser, dbPassword, dbDb, dbPort)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		TranslateError: true,
+	})
 	fatalIfError(err)
 
 	err = db.AutoMigrate(&model.Wallet{})
