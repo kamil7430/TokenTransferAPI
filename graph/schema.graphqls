@@ -12,6 +12,7 @@ type Mutation {
   """
   Concurrent-safe mutation that transfers `amount` tokens from wallet
   with `from_address` address to wallet with `to_address` address.
+  Creates the second wallet if it does not exist.
   """
   transfer(from_address: Address!, to_address: Address!, amount: Int64!): Int64!
 }

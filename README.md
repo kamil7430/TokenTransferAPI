@@ -52,7 +52,7 @@ Fetches the wallet with the specified address.
 transfer(from_address: Address!, to_address: Address!, amount: Int64!): Int64!
 ```
 
-Concurrent-safe mutation that transfers `amount` tokens from wallet with `from_address` address to wallet with `to_address` address.
+Concurrent-safe mutation that transfers `amount` tokens from wallet with `from_address` address to wallet with `to_address` address. Creates the second wallet if it does not exist.
 
 ### Examples
 
